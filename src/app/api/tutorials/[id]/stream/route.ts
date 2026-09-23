@@ -38,7 +38,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 
   const [startStr, endStr] = range.replace(/bytes=/, "").split("-");
-  const start = parseInt(startStr, 10);
+  const start = startStr ? parseInt(startStr, 10) : 0;
   const end = endStr ? parseInt(endStr, 10) : stat.size - 1;
   const chunkSize = end - start + 1;
 
