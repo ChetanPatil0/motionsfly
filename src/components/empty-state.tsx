@@ -8,12 +8,16 @@ export function EmptyState({
   description,
   actionLabel,
   actionHref,
+  action,
+  children,
 }: {
   icon: LucideIcon;
   title: string;
   description: string;
   actionLabel?: string;
   actionHref?: string;
+  action?: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed py-16 text-center">
@@ -22,11 +26,14 @@ export function EmptyState({
       </div>
       <h3 className="text-base font-semibold">{title}</h3>
       <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
-      {actionLabel && actionHref && (
+      {action ? (
+        <div className="mt-2">{action}</div>
+      ) : actionLabel && actionHref ? (
         <Button size="sm" asChild className="mt-2">
           <Link href={actionHref}>{actionLabel}</Link>
         </Button>
-      )}
+      ) : null}
+      {children}
     </div>
   );
 }
