@@ -4,6 +4,8 @@ import { apiError, apiSuccess } from "@/lib/api-response";
 import { isSubscriptionNotified, recordSubscriptionNotification } from "@/lib/subscription-notifications";
 import { getCurrentUser } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 // Expiry notice triggered 10 days ahead
 const EXPIRY_WARNING_WINDOW_DAYS = 10;
 
