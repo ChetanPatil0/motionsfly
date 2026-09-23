@@ -79,14 +79,15 @@ export function OrdersChart({ data }: { data: OrderPoint[] }) {
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted)/0.3)" }}
                   content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
+                    if (active && payload && payload.length && payload[0]) {
+                      const count = Number(payload[0].value ?? 0);
                       return (
                         <div className="rounded-xl border bg-card/95 p-3 shadow-xl backdrop-blur-md text-xs space-y-1">
                           <p className="font-semibold text-muted-foreground">
                             {format(new Date(label), "PPP")}
                           </p>
                           <p className="text-base font-black text-blue-500">
-                            {payload[0].value} {payload[0].value === 1 ? "Order" : "Orders"}
+                            {count} {count === 1 ? "Order" : "Orders"}
                           </p>
                         </div>
                       );
