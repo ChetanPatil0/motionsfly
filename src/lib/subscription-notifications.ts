@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
 
-const NOTIF_FILE = path.join(process.cwd(), "data", "subscription-notifications.json");
+const dataDir = process.env.VERCEL ? "/tmp" : path.join(process.cwd(), "data");
+const NOTIF_FILE = path.join(dataDir, "subscription-notifications.json");
 
 function getStore(): Record<string, string> {
   try {
