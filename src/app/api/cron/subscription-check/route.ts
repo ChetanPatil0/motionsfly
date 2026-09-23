@@ -38,7 +38,7 @@ async function handleSubscriptionChecks(req: Request) {
 
   let expiringNotifiedCount = 0;
   for (const sub of expiringSoon) {
-    const cycleKey = sub.currentPeriodEnd.toISOString().split("T")[0];
+    const cycleKey = sub.currentPeriodEnd.toISOString().slice(0, 10);
     const msLeft = sub.currentPeriodEnd.getTime() - now.getTime();
     const daysLeft = Math.max(1, Math.ceil(msLeft / (1000 * 60 * 60 * 24)));
 
@@ -80,7 +80,7 @@ async function handleSubscriptionChecks(req: Request) {
   let expiredStatusUpdatedCount = 0;
 
   for (const sub of expiredSubs) {
-    const cycleKey = sub.currentPeriodEnd.toISOString().split("T")[0];
+    const cycleKey = sub.currentPeriodEnd.toISOString().slice(0, 10);
 
     // Send expired notification exactly once
     if (!isSubscriptionNotified(sub.id, "EXPIRED", cycleKey)) {
