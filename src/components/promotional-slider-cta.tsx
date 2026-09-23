@@ -47,6 +47,8 @@ export function PromotionalSliderCta({
   }
 
   const slide = activeSlides[index] || activeSlides[0];
+  if (!slide) return null;
+
   const config: SlideConfig = parseSlideSubtitle(slide.subtitle);
 
   // Alignment classes mapping
