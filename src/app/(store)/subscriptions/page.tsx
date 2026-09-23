@@ -15,7 +15,9 @@ export const dynamic = "force-dynamic";
 export default async function SubscriptionsPage() {
   const user = await getCurrentUser();
   const cookieStore = cookies();
-  const currencyView = cookieStore.get("NEXT_CURRENCY")?.value || (user?.country === "IN" ? "INR" : "USD");
+  const rawCurrency = cookieStore.get("NEXT_CURRENCY")?.value || cookieStore.get("mf_currency_view")?.value;
+  const currencyView: "INR" | "USD" =
+    rawCurrency === "INR" || rawCurrency === "USD" ? rawCurrency : user?.country === "IN" ? "INR" : "USD";
 
   const [plans, activeSub] = await Promise.all([
     prisma.subscriptionPlan.findMany({
