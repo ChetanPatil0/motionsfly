@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Palette rationale: neutrals lean cool graphite/ink rather than default
+  warm-gray or pure black — the same reason color-grading monitors use
+  neutral cool-toned surrounds (it doesn't bias how you read color). The
+  amber "signal" stays as the single accent (an NLE timeline playhead),
+  and success uses a desaturated scope-green rather than a generic bright
+  green, echoing a waveform monitor rather than a default UI green.
+*/
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 222 25% 12%;
+    --card: 210 20% 100%;
+    --card-foreground: 222 25% 12%;
+    --popover: 210 20% 100%;
+    --popover-foreground: 222 25% 12%;
+    --primary: 222 25% 13%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 210 16% 94%;
+    --secondary-foreground: 222 25% 13%;
+    --muted: 210 16% 94%;
+    --muted-foreground: 215 14% 42%;
+    --accent: 210 16% 94%;
+    --accent-foreground: 222 25% 13%;
+    --destructive: 5 72% 51%;
+    --destructive-foreground: 210 20% 98%;
+    --success: 152 48% 36%;
+    --success-foreground: 210 20% 98%;
+    --border: 214 16% 88%;
+    --input: 214 16% 88%;
+    --ring: 222 25% 13%;
+    --radius: 0.65rem;
+    /* Signature accent — echoes an NLE timeline playhead. Used sparingly:
+       the hero ruler strip, monospace price tags, one CTA underline. */
+    --signal: 32 95% 52%;
+    --signal-foreground: 20 45% 12%;
+  }
+
+  .dark {
+    --background: 222 24% 8%;
+    --foreground: 210 18% 95%;
+    --card: 222 20% 11%;
+    --card-foreground: 210 18% 95%;
+    --popover: 222 20% 11%;
+    --popover-foreground: 210 18% 95%;
+    --primary: 210 18% 95%;
+    --primary-foreground: 222 24% 10%;
+    --secondary: 222 15% 16%;
+    --secondary-foreground: 210 18% 95%;
+    --muted: 222 15% 16%;
+    --muted-foreground: 216 12% 62%;
+    --accent: 222 15% 16%;
+    --accent-foreground: 210 18% 95%;
+    --destructive: 5 65% 48%;
+    --destructive-foreground: 210 18% 95%;
+    --success: 152 44% 46%;
+    --success-foreground: 222 24% 10%;
+    --border: 222 15% 18%;
+    --input: 222 15% 18%;
+    --ring: 216 12% 72%;
+    --signal: 32 90% 58%;
+    --signal-foreground: 20 45% 10%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Top horizontal loader (nprogress) styling — uses the signal accent so
+   navigation feedback reads as "the playhead moving," not a generic bar. */
+#nprogress .bar {
+  background: hsl(var(--signal));
+  height: 2px;
+  position: fixed;
+  z-index: 1031;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+#nprogress .peg {
+  box-shadow: 0 0 10px hsl(var(--signal)), 0 0 5px hsl(var(--signal));
+}
+
+/* Strict fixed viewport height lock for admin dashboard to eliminate whole-page scrolling */
+html.admin-viewport-lock,
+body.admin-viewport-lock {
+  height: 100% !important;
+  max-height: 100% !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
