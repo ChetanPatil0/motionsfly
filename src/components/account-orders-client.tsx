@@ -27,7 +27,7 @@ export type OrderListItem = {
   subtotal: number;
   discount: number;
   total: number;
-  currency: string;
+  currency: "INR" | "USD";
   status: "PENDING" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED";
   paymentStatus: string;
   paymentMethod: string | null;
