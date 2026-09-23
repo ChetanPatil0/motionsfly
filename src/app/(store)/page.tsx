@@ -281,10 +281,10 @@ export default async function HomePage() {
               </div>
 
               {/* Main Video Viewport Canvas with Interactive Modal */}
-              <HeroPreviewModal
-                thumbnailUrl={heroThumbs.length > 0 ? heroThumbs[0].thumbnail : null}
-                productTitle={heroThumbs.length > 0 ? heroThumbs[0].title : "MotionFly Cinematic Suite Showreel"}
-              />
+<HeroPreviewModal
+  thumbnailUrl={heroThumbs[0]?.thumbnail ?? null}
+  productTitle={heroThumbs[0]?.title ?? "MotionFly Cinematic Suite Showreel"}
+/>
 
               {/* Simulated Multi-Track NLE Timeline Ruler */}
               <div className="mt-3 rounded-lg bg-muted/40 p-2.5 space-y-1.5 font-mono text-[10px]">
