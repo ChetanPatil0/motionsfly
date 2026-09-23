@@ -44,6 +44,9 @@ type StoreSetting = {
   razorpayEnabled: boolean;
   stripeEnabled: boolean;
   paypalEnabled: boolean;
+  razorpayConfigured?: boolean;
+  stripeConfigured?: boolean;
+  paypalConfigured?: boolean;
   supportEmail: string | null;
 };
 
@@ -89,9 +92,9 @@ export function SubscriptionCheckoutClient({
   const basePrice = currency === "INR" ? plan.priceINR : plan.priceUSD;
   const currentTotal = couponResult ? couponResult.finalTotal : basePrice;
 
-  const razorpayAvailable = !!settings.razorpayEnabled;
-  const stripeAvailable = !!settings.stripeEnabled;
-  const paypalAvailable = !!settings.paypalEnabled;
+  const razorpayAvailable = !!settings.razorpayEnabled && settings.razorpayConfigured !== false;
+  const stripeAvailable = !!settings.stripeEnabled && settings.stripeConfigured !== false;
+  const paypalAvailable = !!settings.paypalEnabled && settings.paypalConfigured !== false;
 
   // Set default provider based on available settings
   const defaultProvider = razorpayAvailable
@@ -122,11 +125,11 @@ export function SubscriptionCheckoutClient({
   const selectedProvider = watch("provider");
 
   useEffect(() => {
-    if (selectedProvider === "RAZORPAY" && !settings.razorpayEnabled) {
-      if (settings.stripeEnabled) setValue("provider", "STRIPE");
-      else if (settings.paypalEnabled) setValue("provider", "PAYPAL");
+    if (selectedProvider === "RAZORPAY" && !razorpayAvailable) {
+      if (stripeAvailable) setValue("provider", "STRIPE");
+      else if (paypalAvailable) setValue("provider", "PAYPAL");
     }
-  }, [settings, selectedProvider, setValue]);
+  }, [razorpayAvailable, stripeAvailable, paypalAvailable, selectedProvider, setValue]);
 
   // PayPal message listener and status polling
   useEffect(() => {
