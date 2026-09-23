@@ -26,7 +26,10 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
         variant="ghost"
         size="icon"
         aria-label={`Theme: ${current.label}. Click to change.`}
-        onClick={() => setTheme(OPTIONS[nextIndex].value)}
+        onClick={() => {
+          const next = OPTIONS[nextIndex];
+          if (next) setTheme(next.value);
+        }}
       >
         <Icon className="h-5 w-5" />
       </Button>
