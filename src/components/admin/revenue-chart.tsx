@@ -116,14 +116,14 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
                 />
                 <Tooltip
                   content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
+                    if (active && payload && payload.length && payload[0]) {
                       return (
                         <div className="rounded-xl border bg-card/95 p-3 shadow-xl backdrop-blur-md text-xs space-y-1">
                           <p className="font-semibold text-muted-foreground">
                             {format(new Date(label), "PPP")}
                           </p>
                           <p className="text-base font-black text-primary">
-                            {formatMoney(payload[0].value as number, selectedCurrency)}
+                            {formatMoney((payload[0].value as number) ?? 0, selectedCurrency)}
                           </p>
                         </div>
                       );
