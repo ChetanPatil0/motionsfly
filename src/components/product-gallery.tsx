@@ -21,7 +21,7 @@ export function ProductGallery({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
-  const currentMedia = allMedia[activeIndex] ?? null;
+  const currentMedia = allMedia[activeIndex] || "";
 
   const prev = useCallback(() => {
     setActiveIndex((i) => (i > 0 ? i - 1 : allMedia.length - 1));
