@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const otpSchema = z.object({ code: z.string().trim().length(6, "Enter the 6-digit code") });
 type OtpInput = z.infer<typeof otpSchema>;
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
@@ -84,5 +84,21 @@ export default function VerifyEmailPage() {
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <Card>
+          <CardContent className="pt-6 text-center text-sm text-muted-foreground">
+            Loading...
+          </CardContent>
+        </Card>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
