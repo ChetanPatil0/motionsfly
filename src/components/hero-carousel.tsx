@@ -20,6 +20,8 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
   const [index, setIndex] = useState(0);
   const slide = slides[index];
 
+  if (!slide) return null;
+
   return (
     <div className="relative h-[420px] overflow-hidden sm:h-[480px]">
       {slide.imageUrl ? (
