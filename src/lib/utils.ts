@@ -9,11 +9,12 @@ export function cn(...inputs: ClassValue[]) {
  * Format an integer minor-unit amount (paise/cents) into a display string.
  * Never do money math in floats — this is purely for display.
  */
-export function formatMoney(amountMinorUnits: number, currency: "INR" | "USD"): string {
+export function formatMoney(amountMinorUnits: number, currency: "INR" | "USD" | string = "INR"): string {
   const major = amountMinorUnits / 100;
-  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", {
+  const curr = currency === "USD" ? "USD" : "INR";
+  return new Intl.NumberFormat(curr === "INR" ? "en-IN" : "en-US", {
     style: "currency",
-    currency,
+    currency: curr,
     maximumFractionDigits: 2,
   }).format(major);
 }
