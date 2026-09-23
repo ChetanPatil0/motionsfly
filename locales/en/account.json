@@ -1,0 +1,11 @@
+{
+  "nav": {
+    "profile": "Profile",
+    "orders": "Orders",
+    "downloads": "Downloads",
+    "wishlist": "Wishlist",
+    "reviews": "Reviews",
+    "subscription": "Subscription",
+    "appearance": "Appearance"
+  }
+}

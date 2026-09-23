@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: motionfly
+      POSTGRES_PASSWORD: motionfly
+      POSTGRES_DB: motionfly
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://motionfly:motionfly@db:5432/motionfly
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: change-me-in-production
+    ports:
+      - "3000:3000"
+    volumes:
+      # Private paid-file storage — MUST be a persistent volume, never left
+      # inside the container filesystem, or every deploy wipes purchased
+      # product files.
+      - app_storage:/app/storage
+      - app_uploads:/app/public/uploads
+
+volumes:
+  db_data:
+  app_storage:
+  app_uploads:

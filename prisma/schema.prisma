@@ -1,0 +1,753 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ────────────────────────────────────────────────────────────
+// ENUMS
+// ────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum ProductType {
+  DIGITAL_RESOURCE
+  PLUGIN
+  SCRIPT
+  TEMPLATE
+  PRESET
+  LUT
+  GRAPHICS
+  PROJECT_FILE
+  OTHER
+}
+
+enum TutorialAccessType {
+  FREE
+  PAID
+  PREMIUM
+}
+
+enum TutorialContentType {
+  EXTERNAL_LINK
+  UPLOADED_VIDEO
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+  TRIALING
+  INCOMPLETE
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  STRIPE
+  PAYPAL
+}
+
+enum Currency {
+  INR
+  USD
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum CartItemType {
+  PRODUCT
+  TUTORIAL
+  SUBSCRIPTION_PLAN
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum DownloadStatus {
+  SUCCESS
+  DENIED
+  EXPIRED
+  LIMIT_EXCEEDED
+}
+
+// ────────────────────────────────────────────────────────────
+// USERS
+// ────────────────────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(uuid())
+  name              String
+  email             String    @unique
+  emailVerified     DateTime?
+  passwordHash      String?
+  role              Role      @default(CUSTOMER)
+  isActive          Boolean   @default(true)
+  image             String?
+  country           String    @default("IN")
+  loyaltyPoints     Int       @default(0)
+  otpCode           String?
+  otpExpiresAt      DateTime?
+  pendingEmail      String?
+  resetToken        String?   @unique
+  resetTokenExpires DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  preference     UserPreference?
+  orders         Order[]
+  subscriptions  Subscription[]
+  cart           Cart?
+  downloads      Download[]
+  wishlist       Wishlist?
+  reviews        Review[]
+  likes          ProductLike[]
+  couponUsages   CouponUsage[]
+  invoices       Invoice[]
+  pointsLedger   PointsLedger[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model PendingRegistration {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  country      String   @default("IN")
+  otpCode      String
+  otpExpiresAt DateTime
+  createdAt    DateTime @default(now())
+
+  @@map("pending_registrations")
+}
+
+model PointsLedger {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points      Int
+  reason      String
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("points_ledger")
+}
+
+model UserPreference {
+  id     String          @id @default(uuid())
+  userId String          @unique
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme  ThemePreference @default(SYSTEM)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+// ────────────────────────────────────────────────────────────
+// CATALOG
+// ────────────────────────────────────────────────────────────
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  products  Product[]
+  tutorials Tutorial[]
+
+  @@index([slug])
+  @@map("categories")
+}
+
+model Product {
+  id               String      @id @default(uuid())
+  title            String
+  slug             String      @unique
+  description      String
+  shortDescription String?
+  type             ProductType @default(DIGITAL_RESOURCE)
+  categoryId       String?
+  category         Category?   @relation(fields: [categoryId], references: [id])
+  thumbnail        String?
+  images           String[]    @default([])
+
+  priceINR  Int // minor units (paise)
+  priceUSD  Int // minor units (cents)
+
+  isFree      Boolean @default(false)
+  isPremium   Boolean @default(false)
+  isPublished Boolean @default(false)
+  isFeatured  Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  files        ProductFile[]
+  orderItems   OrderItem[]
+  wishlistItem WishlistItem[]
+  likes        ProductLike[]
+  reviews      Review[]
+  downloads    Download[]
+  cartItems    CartItem[]
+  offers       OfferProduct[]
+
+  @@index([isPublished])
+  @@index([isFeatured])
+  @@index([categoryId])
+  @@index([slug])
+  @@map("products")
+}
+
+model ProductFile {
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storageKey  String // e.g. products/{productId}/{random-id}.zip
+  fileName    String
+  mimeType    String
+  sizeBytes   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([productId])
+  @@map("product_files")
+}
+
+// ────────────────────────────────────────────────────────────
+// TUTORIALS
+// ────────────────────────────────────────────────────────────
+
+model Tutorial {
+  id          String             @id @default(uuid())
+  title       String
+  slug        String             @unique
+  description String
+  contentUrl  String? // video/content reference (external link)
+  contentType TutorialContentType @default(EXTERNAL_LINK)
+  videoStorageKey String? // set when contentType is UPLOADED_VIDEO — private local storage
+  videoSizeBytes  Int?
+  thumbnail   String?
+  categoryId  String?
+  category    Category?          @relation(fields: [categoryId], references: [id])
+  accessType  TutorialAccessType @default(FREE)
+
+  priceINR Int @default(0)
+  priceUSD Int @default(0)
+
+  isPublished Boolean @default(false)
+  isFeatured  Boolean @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+
+  @@index([isPublished])
+  @@index([accessType])
+  @@index([slug])
+  @@map("tutorials")
+}
+
+// ────────────────────────────────────────────────────────────
+// SUBSCRIPTIONS
+// ────────────────────────────────────────────────────────────
+
+model SubscriptionPlan {
+  id              String          @id @default(uuid())
+  name            String
+  description     String?
+  priceINR        Int
+  priceUSD        Int
+  billingInterval BillingInterval
+  isActive        Boolean         @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                     String             @id @default(uuid())
+  userId                 String
+  user                   User               @relation(fields: [userId], references: [id])
+  planId                 String
+  plan                   SubscriptionPlan   @relation(fields: [planId], references: [id])
+  provider               PaymentProvider
+  status                 SubscriptionStatus @default(INCOMPLETE)
+  currency               Currency
+  startDate              DateTime           @default(now())
+  currentPeriodStart     DateTime
+  currentPeriodEnd       DateTime
+  cancelAtPeriodEnd      Boolean            @default(false)
+  cancelledAt            DateTime?
+  providerSubscriptionId String?            @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments SubscriptionPayment[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model SubscriptionPayment {
+  id                 String          @id @default(uuid())
+  subscriptionId     String
+  subscription       Subscription    @relation(fields: [subscriptionId], references: [id])
+  provider           PaymentProvider
+  providerPaymentId  String?
+  amount             Int
+  currency           Currency
+  status             PaymentStatus
+  periodStart        DateTime
+  periodEnd          DateTime
+  createdAt          DateTime        @default(now())
+
+  @@index([subscriptionId])
+  @@map("subscription_payments")
+}
+
+// ────────────────────────────────────────────────────────────
+// CART
+// ────────────────────────────────────────────────────────────
+
+model Cart {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id     String       @id @default(uuid())
+  cartId String
+  cart   Cart         @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  type   CartItemType
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  tutorialId String?
+  tutorial   Tutorial? @relation(fields: [tutorialId], references: [id])
+
+  planId String?
+  plan   SubscriptionPlan? @relation(fields: [planId], references: [id])
+
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cartId])
+  @@map("cart_items")
+}
+
+// ────────────────────────────────────────────────────────────
+// ORDERS
+// ────────────────────────────────────────────────────────────
+
+model Order {
+  id            String        @id @default(uuid())
+  orderNumber   String        @unique
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
+  guestEmail    String?
+  billingName   String?
+  billingInfo   Json?
+
+  subtotal      Int
+  discount      Int      @default(0)
+  total         Int
+  currency      Currency
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod PaymentProvider?
+
+  couponId String?
+  coupon   Coupon? @relation(fields: [couponId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     OrderItem[]
+  payments  Payment[]
+  invoice   Invoice?
+  downloads Download[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([currency])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId    String?
+  product      Product? @relation(fields: [productId], references: [id])
+  tutorialId   String?
+  tutorial     Tutorial? @relation(fields: [tutorialId], references: [id])
+  planId       String?
+  plan         SubscriptionPlan? @relation(fields: [planId], references: [id])
+
+  // purchase snapshot — never mutated after creation
+  itemTitle String
+  price     Int
+  currency  Currency
+  quantity  Int      @default(1)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model Payment {
+  id                String          @id @default(uuid())
+  orderId           String
+  order             Order           @relation(fields: [orderId], references: [id])
+  provider          PaymentProvider
+  providerPaymentId String?
+  providerOrderId   String?
+  amount            Int
+  currency          Currency
+  status            PaymentStatus   @default(PENDING)
+  rawPayload        Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@map("payments")
+}
+
+// ────────────────────────────────────────────────────────────
+// DOWNLOADS
+// ────────────────────────────────────────────────────────────
+
+model Download {
+  id        String         @id @default(uuid())
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product        @relation(fields: [productId], references: [id])
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id])
+  token     String         @unique
+  status    DownloadStatus
+  ipAddress String?
+  expiresAt DateTime
+  downloadCount Int        @default(0)
+  maxDownloads  Int        @default(5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("downloads")
+}
+
+// ────────────────────────────────────────────────────────────
+// WISHLIST / LIKES / REVIEWS
+// ────────────────────────────────────────────────────────────
+
+model Wishlist {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  items     WishlistItem[]
+
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id         String   @id @default(uuid())
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([wishlistId, productId])
+  @@map("wishlist_items")
+}
+
+model ProductLike {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@map("product_likes")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  rating    Int
+  content   String
+  isHidden  Boolean  @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@map("reviews")
+}
+
+// ────────────────────────────────────────────────────────────
+// COUPONS / OFFERS
+// ────────────────────────────────────────────────────────────
+
+model Coupon {
+  id                String       @id @default(uuid())
+  code              String       @unique
+  discountType      DiscountType
+  discountValue     Int // percentage (0-100) or fixed minor units
+  minOrderAmount    Int?
+  usageLimit        Int?
+  startDate         DateTime
+  endDate           DateTime
+  isActive          Boolean      @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usages CouponUsage[]
+  orders Order[]
+
+  @@index([code])
+  @@index([isActive])
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id        String   @id @default(uuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  orderId   String
+  createdAt DateTime @default(now())
+
+  @@index([couponId])
+  @@map("coupon_usages")
+}
+
+model Offer {
+  id            String   @id @default(uuid())
+  name          String
+  discountType  DiscountType
+  discountValue Int
+  startDate     DateTime
+  endDate       DateTime
+  isActive      Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products OfferProduct[]
+
+  @@index([isActive])
+  @@map("offers")
+}
+
+model OfferProduct {
+  id        String  @id @default(uuid())
+  offerId   String
+  offer     Offer   @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([offerId, productId])
+  @@map("offer_products")
+}
+
+// ────────────────────────────────────────────────────────────
+// INVOICES
+// ────────────────────────────────────────────────────────────
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique
+  orderId       String   @unique
+  order         Order    @relation(fields: [orderId], references: [id])
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+
+  billingName  String
+  billingEmail String
+  billingInfo  Json?
+
+  subtotal Int
+  discount Int @default(0)
+  tax      Int @default(0)
+  total    Int
+  currency Currency
+
+  paymentMethod PaymentProvider?
+  issuedAt      DateTime         @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@map("invoices")
+}
+
+// ────────────────────────────────────────────────────────────
+// STORE SETTINGS (singleton row)
+// ────────────────────────────────────────────────────────────
+
+model HeroSlide {
+  id        String   @id @default(uuid())
+  title     String
+  subtitle  String?
+  imageUrl  String?
+  ctaLabel  String?
+  ctaHref   String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("hero_slides")
+}
+
+model StoreSetting {
+  id String @id @default("default")
+
+  // General
+  storeName     String  @default("MotionFly")
+  storeLogo     String?
+  favicon       String?
+  storeEmail    String?
+  supportEmail  String?
+  defaultCountry String @default("IN")
+  timezone      String  @default("Asia/Kolkata")
+  storeActive   Boolean @default(true)
+  isMaintenance Boolean @default(false)
+
+  // Payments — enable flags only; secrets live in env vars, never here
+  razorpayEnabled Boolean @default(false)
+  stripeEnabled   Boolean @default(false)
+  paypalEnabled   Boolean @default(false)
+
+  // Subscriptions
+  subscriptionsEnabled Boolean @default(true)
+
+  // Downloads
+  downloadExpiryMinutes Int @default(10080)
+  maxDownloads           Int @default(5)
+
+  // Email
+  emailSenderName    String  @default("MotionFly")
+  emailSenderAddress String?
+  orderEmailsEnabled       Boolean @default(true)
+  invoiceEmailsEnabled     Boolean @default(true)
+  downloadEmailsEnabled    Boolean @default(true)
+  subscriptionEmailsEnabled Boolean @default(true)
+
+  // Website
+  heroTitle    String?
+  heroSubtitle String?
+  footerText   String?
+  instagramUrl String?
+  twitterUrl   String?
+  youtubeUrl   String?
+  facebookUrl  String?
+  linkedinUrl  String?
+
+  // Invoice template — admin-editable HTML with {{placeholders}}, rendered
+  // live in the admin preview and used when generating customer invoices.
+  invoiceTemplateHtml String? @db.Text
+
+  // Loyalty points — awarded as a prorated credit when a subscription is
+  // cancelled mid-period, so the unused portion isn't simply forfeited.
+  pointsPerCurrencyUnit Int @default(1)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("store_settings")
+}

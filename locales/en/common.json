@@ -1,0 +1,5 @@
+{
+  "appName": "MotionFly",
+  "actions": { "save": "Save", "cancel": "Cancel", "delete": "Delete", "edit": "Edit", "tryAgain": "Try Again" },
+  "states": { "loading": "Loading...", "empty": "Nothing to show yet.", "error": "Something went wrong." }
+}
