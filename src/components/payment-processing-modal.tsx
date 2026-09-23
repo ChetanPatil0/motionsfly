@@ -9,7 +9,7 @@ export type PaymentModalStatus = "PROCESSING" | "CONFIRMING" | "SUCCESS" | "FAIL
 interface PaymentProcessingModalProps {
   isOpen: boolean;
   status: PaymentModalStatus;
-  orderNumber: string;
+  orderNumber?: string;
   approveUrl?: string;
   errorMessage?: string;
   onClose: () => void;
@@ -19,7 +19,7 @@ interface PaymentProcessingModalProps {
 export function PaymentProcessingModal({
   isOpen,
   status,
-  orderNumber,
+  orderNumber = "",
   errorMessage,
   onClose,
   onRetry,
