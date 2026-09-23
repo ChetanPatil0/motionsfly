@@ -389,7 +389,7 @@ export function SubscriptionCheckoutClient({
       <PaymentProcessingModal
         isOpen={paymentModalState.isOpen}
         status={paymentModalState.status}
-        orderNumber={paymentModalState.orderNumber}
+        orderNumber={paymentModalState.orderNumber ?? ""}
         approveUrl={paymentModalState.approveUrl}
         errorMessage={paymentModalState.errorMessage}
         onClose={() => {
