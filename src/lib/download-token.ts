@@ -42,7 +42,7 @@ export function decodeDownloadCode(code: string): { token: string; orderNumber?:
 
     if (raw.includes(":")) {
       const parts = raw.split(":");
-      return { token: parts[0], orderNumber: parts.slice(1).join(":") };
+      return { token: parts[0] || "", orderNumber: parts.slice(1).join(":") };
     }
     return { token: raw };
   } catch {
