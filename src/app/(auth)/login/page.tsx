@@ -57,10 +57,25 @@ export default function LoginPage() {
       } catch {
         // Non-blocking merge fallback
       }
-      const session = await getSession();
-      const role = (session?.user as { role?: string } | undefined)?.role;
-      router.push(role === "ADMIN" ? "/admin/dashboard" : "/account");
-      router.refresh();
+
+      // Check callbackUrl from query parameter first
+      const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const callbackUrl = searchParams?.get("callbackUrl");
+
+      let targetUrl = callbackUrl && !callbackUrl.startsWith("/login") ? callbackUrl : "";
+
+      if (!targetUrl) {
+        try {
+          const sessionRes = await fetch("/api/auth/session");
+          const sessionData = await sessionRes.json();
+          targetUrl = sessionData?.user?.role === "ADMIN" ? "/admin/dashboard" : "/account";
+        } catch {
+          targetUrl = "/account";
+        }
+      }
+
+      // Full navigation ensures newly set cookies are sent cleanly to Server Components
+      window.location.href = targetUrl;
     } finally {
       setIsLoading(false);
     }
