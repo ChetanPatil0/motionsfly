@@ -6,7 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
+  
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
